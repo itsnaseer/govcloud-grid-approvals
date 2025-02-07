@@ -108,18 +108,8 @@ global with sharing class ApprovalResponse {
 curl -X POST https://your-salesforce-instance/services/apexrest/ApprovalResponse \
      -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
      -H "Content-Type: application/json" \
-     -d '{"recordId": "500ep0000024aVHAAY", "decision": "Approved", "userEmail": "user@example.com"}'
+     -d '{"recordId": "YOUR_RECORD_ID", "decision": "Approved", "userEmail": "user@example.com"}'
 ```
 
 ---
-
-## 📌 Next Steps & Enhancements
-🔹 **Add error handling for invalid case IDs**  
-🔹 **Expand approval tracking logs in Salesforce**  
-🔹 **Enhance Slack messages with case details & history**  
-
----
-
-## 📞 Support
-For any issues, reach out via Slack or Salesforce Support Channels. 🚀
 
