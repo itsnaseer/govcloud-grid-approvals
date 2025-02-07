@@ -72,10 +72,12 @@ Check out the `.apex` snippets in the code repsitory.
 
 ## Environment Variables
 Make sure to Set these values. 
+```
 SLACK_APP_TOKEN=
 SLACK_BOT_TOKEN=
 SALESFORCE_API_URL=YOUR_ORG_URL/services/apexrest/ApprovalResponse
 SALESFORCE_ACCESS_TOKEN=
+```
 
 ### **🔹 Slack App Setup**
 1. **Install Python & Virtual Environment**
