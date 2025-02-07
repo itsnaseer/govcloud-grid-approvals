@@ -1,7 +1,9 @@
 # 🚀 Salesforce-Slack Approval Integration
 
 ## Overview
-This project integrates **Slack** and **Salesforce** to enable approval workflows directly from Slack. Users can approve or reject Salesforce Cases within Slack, and the status updates are reflected in Salesforce. The implementation **bypasses Salesforce's built-in approval process** and directly updates case records.
+This proof of concept integrates **Slack** and **Salesforce Gov Cloud** to enable approval workflows directly from Slack. Users can approve or reject Salesforce Cases within Slack, and the status updates are reflected in Salesforce. The implementation **bypasses Salesforce's built-in approval process** and directly updates case records.
+
+DO NOT DEPLOY THIS TO PRODUCTION. This app uses some shortcuts like environment variables for simplicity. Not great for real world use. 
 
 ---
 
@@ -54,27 +56,9 @@ def handle_approval_action(ack, body, say, logger, context, action):
 - **Directly updates the Case record** (bypasses standard approval process)
 
 #### **Key Code Snippets (Apex)**
-```apex
-@RestResource(urlMapping='/ApprovalResponse/*')
-global with sharing class ApprovalResponse {
-    @HttpPost
-    global static String processApproval() {
-        RestRequest req = RestContext.request;
-        String requestBody = req.requestBody.toString();
-        Map<String, Object> data = (Map<String, Object>) JSON.deserializeUntyped(requestBody);
-
-        String recordId = (String) data.get('recordId');
-        String decision = (String) data.get('decision');
-
-        Case c = [SELECT Id, Status, Priority FROM Case WHERE Id = :recordId LIMIT 1];
-        if (decision == 'Approved') { c.Status = 'In Progress'; }
-        else { c.Status = 'New'; c.Priority = 'Medium'; }
-        
-        update c;
-        return '{"status": "success", "message": "Case updated successfully"}';
-    }
-}
-```
+Check out the `.apex` snippets in the code repsitory. 
+- SlackApprovalNotifier sets up the Flow Action.
+- ApprovalResponse is the end point for Slack to send the approval payload
 
 ---
 
@@ -82,8 +66,16 @@ global with sharing class ApprovalResponse {
 ### **🔹 Salesforce Setup**
 1. **Enable Apex REST API Access**
 2. **Deploy the `ApprovalResponse` Apex class**
-3. **Generate Salesforce OAuth Credentials** (Client ID & Secret)
-4. **Create Slack App OAuth Token & Permissions**
+3. **Deploy the `SlackApprovalNotifier` Apex class**
+4. **Generate Salesforce OAuth Credentials** (Client ID & Secret)
+5. **Create Slack App OAuth Token & Permissions**
+
+## Environment Variables
+Make sure to Set these values. 
+SLACK_APP_TOKEN=
+SLACK_BOT_TOKEN=
+SALESFORCE_API_URL=YOUR_ORG_URL/services/apexrest/ApprovalResponse
+SALESFORCE_ACCESS_TOKEN=
 
 ### **🔹 Slack App Setup**
 1. **Install Python & Virtual Environment**
