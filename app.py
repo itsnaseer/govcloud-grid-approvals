@@ -113,55 +113,70 @@ def send_approval_decision_to_salesforce(record_id, decision, user_email):
         logger.error(f"Failed to update approval in Salesforce: {response.text}")
 
         
-def build_home_view():
-    """Constructs and returns the Block Kit layout for the Slack App Home tab."""
-    return {
-        "type": "home",
-        "blocks": [
-            {
-                "type": "actions",
-                "block_id": "filter_options",
-                "elements": [
-                    {
-                        "type": "static_select",
-                        "placeholder": {"type": "plain_text", "text": "Status", "emoji": True},
-                        "options": [
-                            {"text": {"type": "plain_text", "text": "Pending", "emoji": True}, "value": "pending"},
-                            {"text": {"type": "plain_text", "text": "Approved", "emoji": True}, "value": "approved"},
-                            {"text": {"type": "plain_text", "text": "Rejected", "emoji": True}, "value": "rejected"},
-                            {"text": {"type": "plain_text", "text": "Recalled", "emoji": True}, "value": "recalled"}
-                        ],
-                        "action_id": "status_select"
-                    },
-                    {
-                        "type": "static_select",
-                        "placeholder": {"type": "plain_text", "text": "Assigned to", "emoji": True},
-                        "options": [
-                            {"text": {"type": "plain_text", "text": "Assigned to me", "emoji": True}, "value": "assigned_to_me"},
-                            {"text": {"type": "plain_text", "text": "All", "emoji": True}, "value": "all"}
-                        ],
-                        "action_id": "assignee_select"
-                    }
-                ]
-            },
-            {"type": "divider"}
-        ]
-    }
+# def build_home_view():
+#     """Constructs and returns the Block Kit layout for the Slack App Home tab."""
+#     return {
+#         "type": "home",
+#         "blocks": [
+#             {
+#                 "type": "header",
+#                 "text": {
+#                     "type": "plain_text",
+#                     "text": "Overview",
+#                     "emoji": "true"
+#                 }
+#             },
+#             {
+#                 "type": "section",
+#                 "text": {
+#                     "type": "mrkdwn",
+#                     "text": "This proof of concept integrates :slack: *Slack Enterprise Grid* and :salesforce: *Salesforce Gov Cloud* to enable approval workflows directly from Slack. Users can approve or reject Salesforce Cases within Slack, and the status updates are reflected in Salesforce. The implementation _bypasses Salesforce's built-in approval process_ and directly updates case records.\n\n:warning: *DO NOT DEPLOY THIS TO PRODUCTION.* This app uses some shortcuts like environment variables for simplicity. Not great for real world use"
+#                 }
+#             },
+#             {
+#                 "type": "divider"
+#             },
+#             {
+#                 "type": "section",
+#                 "text": {
+#                     "type": "mrkdwn",
+#                     "text": "\n*:repeat: Process Flow*\n\t1.\t*Case Creation in Salesforce*:A new case is created in Salesforce with a High priority.\n\t2.\t*Slack Notification*: A Slack message is sent with Approve :white_check_mark: / Reject :x: action buttons.\n\t3.\t*User Decision (Slack App)*:\tClicking Approve or Reject triggers a Slack Action Handler.\n\t4.\t*ApprovalResponse (Apex Class in Salesforce)*:Based on the Slack decision:\n\t- If Approved → Update Status = In Progress\n\t- If Rejected → Update Status = New and Priority = Medium\n\t5.\t*Salesforce Case Updates Automatically*:The Salesforce record reflects the updated status and priority."
+#                 }
+#             },
+#             {
+#                 "type": "divider"
+#             },
+#             {
+#                 "type": "context",
+#                 "elements": [
+#                     {
+#                         "type": "mrkdwn",
+#                         "text": ":github: <https://github.com/itsnaseer/govcloud-grid-approvals|govcloud-grid-approvals>"
+#                     }
+#                 ]
+#             }
+#         ]
+#     }
 
 @slack_app.event("app_home_opened")
 def handle_app_home_opened(event):
     """Handles the app_home_opened event and updates the Slack Home tab."""
     user_id = event.get("user")
-    if not user_id:
-        logger.error("Missing user ID in event payload")
-        return
-    
-    logger.info(f"Updating App Home for user: {user_id}")
+    try:
+        with open("block-kit/app_home_default.json","r") as file:
+            app_home_json = json.load(file)
+    except Exception as e:
+        logger.error(f"Error loading app_home.json to app_home_json: {e}")
 
-    slack_app.client.views_publish(
-        user_id=user_id,
-        view=build_home_view()
-    )
+    try:
+
+        slack_app.client.views_publish(
+            user_id=event["user"],
+            view=app_home_json
+        )
+
+    except Exception as e:
+        logger.error(f"Error publishing home tab: {e}")
 
 ### RUN SLACK IN A SEPARATE THREAD ###
 def run_slack():

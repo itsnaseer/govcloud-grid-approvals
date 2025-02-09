@@ -1,0 +1,78 @@
+{
+	"type": "home",
+	"blocks": [
+		{
+			"type": "header",
+			"text": {
+				"type": "plain_text",
+				"text": "Overview",
+				"emoji": true
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "This proof of concept integrates :slack: *Slack Enterprise Grid* and :salesforce: *Salesforce Gov Cloud* to enable approval workflows directly from Slack. Users can approve or reject Salesforce Cases within Slack, and the status updates are reflected in Salesforce. The implementation _bypasses Salesforce's built-in approval process_ and directly updates case records.\n\n:warning: *DO NOT DEPLOY THIS TO PRODUCTION.* This app uses some shortcuts like environment variables for simplicity. Not great for real world use"
+			}
+		},
+		{
+			"type": "divider"
+		},
+		{
+			"type": "header",
+			"text": {
+				"type": "plain_text",
+				"text": "Process Flow",
+				"emoji": true
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": ":one: *Case Creation in Salesforce*\nA new case is created in Salesforce with a High priority."
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": ":two: *Slack Notification*\nA Slack message is sent with Approve :white_check_mark: / Reject :x: action buttons."
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": ":three: *User Decision (Slack App)*\nClicking Approve or Reject triggers a Slack Action Handler."
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": ":four: *ApprovalResponse (Apex Class in Salesforce)*\nBased on the Slack decision:\n\t- If Approved → Update Status = In Progress\n\t- If Rejected → Update Status = New and Priority = Medium"
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": ":five: *Salesforce Case Updates Automatically*\nThe Salesforce record reflects the updated status and priority."
+			}
+		},
+		{
+			"type": "divider"
+		},
+		{
+			"type": "context",
+			"elements": [
+				{
+					"type": "mrkdwn",
+					"text": ":github: <https://github.com/itsnaseer/govcloud-grid-approvals|govcloud-grid-approvals>"
+				}
+			]
+		}
+	]
+}
