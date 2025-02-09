@@ -1,8 +1,6 @@
 import os
 import logging
 import json
-import time
-import threading
 import requests
 import re
 from dotenv import load_dotenv
@@ -17,13 +15,45 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Retrieve Slack credentials from environment variables
+SALESFORCE_CLIENT_ID = os.getenv("SALESFORCE_CLIENT_ID")
+SALESFORCE_CLIENT_SECRET = os.getenv("SALESFORCE_CLIENT_SECRET")
+SALESFORCE_USERNAME = os.getenv("SALESFORCE_USERNAME")
+SALESFORCE_PASSWORD = os.getenv("SALESFORCE_PASSWORD")
 SLACK_APP_TOKEN = os.getenv("SLACK_APP_TOKEN")
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 SALESFORCE_API_URL = os.getenv("SALESFORCE_API_URL")
 SALESFORCE_ACCESS_TOKEN = os.getenv("SALESFORCE_ACCESS_TOKEN")
+SALESFORCE_TOKEN_URL=os.getenv("SALESFORCE_TOKEN_URL")
 
 # Initialize Slack App (No Flask)
 slack_app = App(token=SLACK_BOT_TOKEN)
+
+# Function to refresh the Salesforce token
+def refresh_salesforce_token():
+    logger.info("Refreshing Salesforce Access Token...")
+
+    data = {
+        "grant_type": "password",
+        "client_id": SALESFORCE_CLIENT_ID,
+        "client_secret": SALESFORCE_CLIENT_SECRET,
+        "username": SALESFORCE_USERNAME,
+        "password": SALESFORCE_PASSWORD
+    }
+
+    response = requests.post(SALESFORCE_TOKEN_URL, data=data)
+
+    if response.status_code == 200:
+        new_token = response.json().get("access_token")
+        if new_token:
+            os.environ["SALESFORCE_ACCESS_TOKEN"] = new_token  # Update in-memory token
+            logger.info("Salesforce Access Token refreshed successfully.")
+            return new_token
+        else:
+            logger.error("Failed to extract new access token from response.")
+    else:
+        logger.error(f"Failed to refresh token: {response.text}")
+
+    return None
 
 # Dynamic Action Handling for Approve & Reject
 @slack_app.action(re.compile(r"^(approve|reject)_action_(\w+)$"))
@@ -115,10 +145,23 @@ def send_approval_decision_to_salesforce(record_id, decision, user_email):
 
     response = requests.post(SALESFORCE_API_URL, json=payload, headers=headers)
 
-    if response.status_code == 200:
-        logger.info(f"Successfully updated approval in Salesforce for record {record_id}")
-    else:
-        logger.error(f"Failed to update approval in Salesforce: {response.text}")
+    if response.status_code == 401 and "INVALID_SESSION_ID" in response.text:
+            # Token is expired, refresh it and retry the request
+            new_token = refresh_salesforce_token()
+            if new_token:
+                headers["Authorization"] = f"Bearer {new_token}"
+                retry_response = requests.post(os.getenv("SALESFORCE_API_URL"), json=payload, headers=headers)
+                
+                if retry_response.status_code == 200:
+                    logger.info(f"Successfully updated approval in Salesforce for record {record_id}")
+                else:
+                    logger.error(f"Retry failed: {retry_response.text}")
+            else:
+                logger.error("Failed to refresh Salesforce token. Aborting request.")
+        elif response.status_code == 200:
+            logger.info(f"Successfully updated approval in Salesforce for record {record_id}")
+        else:
+            logger.error(f"Failed to update approval in Salesforce: {response.text}")
 
 @slack_app.event("app_home_opened")
 def handle_app_home_opened(event):
