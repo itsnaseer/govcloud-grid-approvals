@@ -9,6 +9,7 @@ public with sharing class SlackApprovalNotifier {
 
     private static void sendSlackMessage(ApprovalRequest request) {
         String slackApiUrl = 'https://slack.com/api/chat.postMessage';
+        String recordLink = 'https://YOUR_DOMAIN.YOUR_ENVIRONMENT.lightning.force.com/lightning/r/Case/'+request.recordId+'/view'
 
         // 🔹 Ensure `details` is never null
         String issueDetails = (request.details != null && request.details.trim() != '') 
@@ -26,9 +27,10 @@ public with sharing class SlackApprovalNotifier {
                 + '},'
                 + '{'
                     + '"type": "section",'
-                    + '"text": {"type": "mrkdwn", "text": "*Case ID:* ' + String.escapeSingleQuotes(request.recordId) 
+                    + '"text": {"type": "mrkdwn", "text": "*Case Number:* ' + String.escapeSingleQuotes(request.caseNumber) 
                     + '\\n*Case Name:* ' + String.escapeSingleQuotes(request.recordName) 
-                    + '\\n*Issue:* ' + String.escapeSingleQuotes(issueDetails) + '"}'
+                    + '\\n*Issue:* ' + String.escapeSingleQuotes(issueDetails)
+                    + '\\n*Record:* <' + recordLink + '| :salesforce: View Case in Salesforce>' + '"}'
                 + '},'
                 + '{'
                     + '"type": "actions",'
@@ -71,6 +73,9 @@ public with sharing class SlackApprovalNotifier {
     public class ApprovalRequest {
         @InvocableVariable(label='Record Id' required=true)
         public String recordId;
+
+        @InvocableVariable(label='Case Number' required=true)
+        public String caseNumber;
 
         @InvocableVariable(label='Record Name' required=true)
         public String recordName;
