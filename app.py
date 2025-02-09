@@ -120,9 +120,18 @@ def send_approval_decision_to_salesforce(record_id, decision, user_email):
 
     logger.info(f"Using Salesforce Access Token: {salesforce_token}")
 
+    logger.info("send_approval_decision_to_salesforce")
+    # Ensure the correct case format for Salesforce
+    decision_mapping = {
+        "approve": "Approved",
+        "reject": "Rejected"
+    }
+    
+    salesforce_decision = decision_mapping.get(decision.lower(), decision)  # Ensure proper mapping
+
     payload = {
         "recordId": record_id.strip(),
-        "decision": decision,
+        "decision": salesforce_decision,
         "userEmail": user_email.strip()
     }
 
