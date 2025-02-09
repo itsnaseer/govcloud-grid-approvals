@@ -83,7 +83,7 @@ SALESFORCE_ACCESS_TOKEN=
 1. **Install Python & Virtual Environment**
 2. **Install dependencies (`slack_bolt`, `requests`, etc.)**
 3. **Configure `.env` file with API credentials**
-4. **Run the Flask-based Slack App**
+4. **Run the Slack App**
 
 ---
 
